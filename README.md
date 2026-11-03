@@ -53,10 +53,10 @@
 
 ```mermaid
 graph TD
-    User([Citizen / Officer / Admin]) -->|HTTPS| Frontend[React 18 + Vite + Tailwind CSS]
-    Frontend -->|REST API & JWT| Backend[FastAPI + SQLAlchemy 2.0]
-    Backend -->|PostgreSQL 5432 / SSL| DB[(Supabase Cloud Database)]
-    Backend -->|Speech-to-Text & Translation| AI[Sarvam AI / Indic Fallback NLP]
+    User["Citizen / Officer / Admin"] -->|HTTPS| Frontend["React 18 + Vite + Tailwind CSS"]
+    Frontend -->|REST API & JWT| Backend["FastAPI + SQLAlchemy 2.0"]
+    Backend -->|PostgreSQL 5432 / SSL| DB[("Supabase Cloud Database")]
+    Backend -->|Speech-to-Text & Translation| AI["Sarvam AI / Indic Fallback NLP"]
 ```
 
 - **Frontend**: Vite 5, React 18, TypeScript, Tailwind CSS, Lucide Icons, Web Audio API.
@@ -76,7 +76,7 @@ Make sure you have the following installed on your machine:
 ---
 
 ### Step 1: Clone the Repository
-Open your terminal / PowerShell:
+Open your terminal or PowerShell:
 ```bash
 git clone https://github.com/namdas-om/Jan-Sahayak-AI-Multilingual-Grievance-Platform.git
 cd Jan-Sahayak-AI-Multilingual-Grievance-Platform
@@ -89,8 +89,8 @@ Copy the sample environment files for both root and backend:
 
 **On Windows (PowerShell):**
 ```powershell
-Copy-Item .env.example .env
-Copy-Item backend\.env.example backend\.env
+Copy-Item ".env.example" ".env"
+Copy-Item "backend\.env.example" "backend\.env"
 ```
 
 **On macOS / Linux:**
@@ -109,10 +109,10 @@ Open your first terminal window in the project root:
 **On Windows (PowerShell):**
 ```powershell
 # 1. Install backend dependencies (if not already installed)
-pip install -r backend\requirements.txt
+pip install -r "backend\requirements.txt"
 
 # 2. Set Python path and start the FastAPI server
-$env:PYTHONPATH="backend"
+$env:PYTHONPATH = "backend"
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -177,11 +177,14 @@ Citizens can track any grievance publicly without logging in:
 ## 🧪 Running Automated Tests
 
 Run backend unit tests (13 tests):
-```bash
-# Windows PowerShell:
-$env:PYTHONPATH="backend"; python -m pytest backend/tests -v
 
-# macOS / Linux:
+**On Windows (PowerShell):**
+```powershell
+$env:PYTHONPATH = "backend"; python -m pytest "backend\tests" -v
+```
+
+**On macOS / Linux:**
+```bash
 PYTHONPATH=backend pytest backend/tests -v
 ```
 
