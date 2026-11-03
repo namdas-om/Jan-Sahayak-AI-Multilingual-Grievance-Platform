@@ -55,31 +55,17 @@ export const LandingPage: React.FC = () => {
           </p>
 
           {/* Primary Call to Actions */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/citizen/complaints/new"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-navy-900 font-bold px-5 py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 text-xs sm:text-sm cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-navy-900 font-bold px-6 py-3.5 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 text-sm cursor-pointer"
             >
               <Mic className="w-4 h-4" />
               <span>{t('registerGrievance')}</span>
             </Link>
             <Link
-              to="/register"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-navy-900 font-bold px-5 py-3 rounded-xl shadow-md transition-colors text-xs sm:text-sm cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4 text-govblue-600" />
-              <span>Create Account</span>
-            </Link>
-            <Link
-              to="/login"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-navy-700/80 hover:bg-navy-600 border border-slate-600 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-xs sm:text-sm cursor-pointer"
-            >
-              <LogIn className="w-4 h-4 text-slate-300" />
-              <span>Sign In</span>
-            </Link>
-            <Link
               to="/track"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-navy-800/80 hover:bg-navy-700 border border-slate-700 text-slate-200 font-semibold px-5 py-3 rounded-xl transition-colors text-xs sm:text-sm cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-navy-700 hover:bg-navy-600 border border-slate-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors text-sm cursor-pointer"
             >
               <Search className="w-4 h-4 text-slate-300" />
               <span>{t('trackComplaint')}</span>
