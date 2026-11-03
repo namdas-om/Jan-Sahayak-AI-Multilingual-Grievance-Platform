@@ -54,23 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithDemo = async (demoRole: RoleName) => {
-    const demoCredentials: Record<RoleName, { email: string; pass: string }> = {
-      citizen: { email: 'citizen@jansahayak.gov.in', pass: 'CitizenPassword@2026' },
-      department_officer: { email: 'officer.water@jansahayak.gov.in', pass: 'StaffPassword@2026' },
-      department_head: { email: 'head.water@jansahayak.gov.in', pass: 'StaffPassword@2026' },
-      system_admin: { email: 'admin@jansahayak.gov.in', pass: 'AdminPassword@2026' },
-    };
-
-    const creds = demoCredentials[demoRole];
-    if (creds) {
-      try {
-        await login(creds.email, creds.pass);
-        return;
-      } catch (err) {
-        console.warn('Backend login fallback to offline state:', err);
-      }
-    }
+  const loginWithDemo = (demoRole: RoleName) => {
 
     const demoAccounts: Record<RoleName, User> = {
       citizen: {

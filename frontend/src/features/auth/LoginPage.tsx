@@ -29,9 +29,9 @@ export const LoginPage: React.FC = () => {
 
   const handleDemoLogin = (role: RoleName) => {
     loginWithDemo(role);
-    if (role === 'system_admin') navigate('/admin/dashboard');
-    else if (role === 'department_head' || role === 'department_officer') navigate('/department/dashboard');
-    else navigate('/citizen/dashboard');
+    if (role === 'system_admin') navigate('/admin/dashboard', { replace: true });
+    else if (role === 'department_head' || role === 'department_officer') navigate('/department/dashboard', { replace: true });
+    else navigate('/citizen/dashboard', { replace: true });
   };
 
   return (
