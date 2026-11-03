@@ -441,32 +441,313 @@ function handleFallback<T>(endpoint: string, options: RequestInit, originalError
     return localComplaintsStore as unknown as T;
   }
 
-  // Department Analytics
-  if (endpoint === '/departments/me/analytics') {
-    return {
-      total_assigned: localComplaintsStore.length,
-      new_received: localComplaintsStore.filter(c => c.status === 'submitted').length,
-      in_progress: localComplaintsStore.filter(c => ['assigned', 'in_progress', 'under_review'].includes(c.status)).length,
-      resolved: localComplaintsStore.filter(c => ['resolved', 'closed'].includes(c.status)).length,
-      escalated: localComplaintsStore.filter(c => c.status === 'escalated').length,
-      overdue: 0,
-      resolution_rate_percent: 66.7,
-      category_distribution: [
-        { category: 'Water Supply', count: 12 },
-        { category: 'Electricity', count: 8 },
-        { category: 'Roads & Infrastructure', count: 15 },
-        { category: 'Sanitation', count: 6 },
-      ],
-      priority_distribution: [
-        { priority: 'critical', count: 3 },
-        { priority: 'high', count: 11 },
-        { priority: 'medium', count: 22 },
-        { priority: 'low', count: 5 },
-      ]
-    } as unknown as T;
+    // Department Complaints Queue
+  if (endpoint.startsWith('/departments/me/complaints')) {
+    let deptFilter: string | null = null;
+    let priorityFilter: string | null = null;
+    let statusFilter: string | null = null;
+
+    if (endpoint.includes('?')) {
+      const qs = endpoint.split('?')[1] || '';
+      const params = new URLSearchParams(qs);
+      deptFilter = params.get('department_id') || params.get('dept');
+      priorityFilter = params.get('priority');
+      statusFilter = params.get('status');
+    }
+
+    let results = [...localComplaintsStore];
+    if (deptFilter && deptFilter !== 'all') {
+      results = results.filter(c => c.assigned_department_id === deptFilter);
+    }
+    if (priorityFilter && priorityFilter !== 'all') {
+      results = results.filter(c => c.priority === priorityFilter);
+    }
+    if (statusFilter && statusFilter !== 'all') {
+      results = results.filter(c => c.status === statusFilter);
+    }
+    return results as unknown as T;
   }
 
-  // Admin Overview
+  // Case Status Update
+  if (options.method === 'POST') {
+    const statusMatch = endpoint.match(/\/complaints\/([^\/]+)\/status/);
+    if (statusMatch) {
+      const cid = statusMatch[1];
+      const body = JSON.parse((options.body as string) || '{}');
+      const currentUser = getStoredUser();
+      const comp = localComplaintsStore.find(c => c.id === cid || c.ticket_id === cid);
+      if (comp) {
+        const prevStatus = comp.status;
+        comp.status = body.new_status;
+        comp.updated_at = new Date().toISOString();
+        if (!comp.status_history) comp.status_history = [];
+        comp.status_history.push({
+          id: `sh-${Date.now()}`,
+          previous_status: prevStatus,
+          new_status: body.new_status,
+          changed_by_name: currentUser?.full_name || 'Department Officer',
+          public_comment: body.public_comment || `Status updated to ${body.new_status.replace('_', ' ')}`,
+          created_at: new Date().toISOString(),
+        });
+        try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+        return comp as unknown as T;
+      }
+    }
+
+    // Resolve Case
+    const resolveMatch = endpoint.match(/\/complaints\/([^\/]+)\/resolve/);
+    if (resolveMatch) {
+      const cid = resolveMatch[1];
+      const body = JSON.parse((options.body as string) || '{}');
+      const currentUser = getStoredUser();
+      const comp = localComplaintsStore.find(c => c.id === cid || c.ticket_id === cid);
+      if (comp) {
+        const prevStatus = comp.status;
+        comp.status = 'resolved';
+        comp.resolution_summary = body.resolution_summary;
+        comp.resolved_at = new Date().toISOString();
+        comp.updated_at = new Date().toISOString();
+        if (!comp.status_history) comp.status_history = [];
+        comp.status_history.push({
+          id: `sh-${Date.now()}`,
+          previous_status: prevStatus,
+          new_status: 'resolved',
+          changed_by_name: currentUser?.full_name || 'Department Officer',
+          public_comment: body.public_comment || `Resolution: ${body.resolution_summary}`,
+          created_at: new Date().toISOString(),
+        });
+        try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+        return comp as unknown as T;
+      }
+    }
+
+    // Escalate Case
+    const escalateMatch = endpoint.match(/\/complaints\/([^\/]+)\/escalate/);
+    if (escalateMatch) {
+      const cid = escalateMatch[1];
+      const body = JSON.parse((options.body as string) || '{}');
+      const currentUser = getStoredUser();
+      const comp = localComplaintsStore.find(c => c.id === cid || c.ticket_id === cid);
+      if (comp) {
+        const prevStatus = comp.status;
+        comp.status = 'escalated';
+        comp.priority = 'critical';
+        comp.updated_at = new Date().toISOString();
+        if (!comp.status_history) comp.status_history = [];
+        comp.status_history.push({
+          id: `sh-${Date.now()}`,
+          previous_status: prevStatus,
+          new_status: 'escalated',
+          changed_by_name: currentUser?.full_name || 'Department Officer',
+          public_comment: `Escalated: ${body.reason || 'Case flagged for supervisor intervention'}`,
+          created_at: new Date().toISOString(),
+        });
+        try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+        return comp as unknown as T;
+      }
+    }
+
+    // Add Note / Comment
+    const commentMatch = endpoint.match(/\/complaints\/([^\/]+)\/comments/);
+    if (commentMatch) {
+      const cid = commentMatch[1];
+      const body = JSON.parse((options.body as string) || '{}');
+      const currentUser = getStoredUser();
+      const comp = localComplaintsStore.find(c => c.id === cid || c.ticket_id === cid);
+      if (comp) {
+        if (!comp.comments) comp.comments = [];
+        const newCm = {
+          id: `cm-${Date.now()}`,
+          author_id: currentUser?.id,
+          author_name: currentUser?.full_name || 'Authorized Official',
+          author_role: currentUser?.roles?.[0]?.role || 'department_officer',
+          body: body.body,
+          visibility: (body.visibility || 'public') as 'public' | 'internal',
+          created_at: new Date().toISOString(),
+        };
+        comp.comments.push(newCm);
+        try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+        return newCm as unknown as T;
+      }
+    }
+
+    // Feedback
+    const feedbackMatch = endpoint.match(/\/complaints\/([^\/]+)\/feedback/);
+    if (feedbackMatch) {
+      const cid = feedbackMatch[1];
+      const body = JSON.parse((options.body as string) || '{}');
+      const comp = localComplaintsStore.find(c => c.id === cid || c.ticket_id === cid);
+      if (comp) {
+        comp.feedback = {
+          id: `fb-${Date.now()}`,
+          rating: body.rating || 5,
+          feedback_text: body.feedback_text || null,
+          created_at: new Date().toISOString(),
+        };
+        try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+        return comp.feedback as unknown as T;
+      }
+    }
+
+    // Reopen Case
+    const reopenMatch = endpoint.match(/\/complaints\/([^\/]+)\/reopen/);
+    if (reopenMatch) {
+      const cid = reopenMatch[1];
+      const body = JSON.parse((options.body as string) || '{}');
+      const currentUser = getStoredUser();
+      const comp = localComplaintsStore.find(c => c.id === cid || c.ticket_id === cid);
+      if (comp) {
+        const prevStatus = comp.status;
+        comp.status = 'reopened';
+        comp.updated_at = new Date().toISOString();
+        if (!comp.status_history) comp.status_history = [];
+        comp.status_history.push({
+          id: `sh-${Date.now()}`,
+          previous_status: prevStatus,
+          new_status: 'reopened',
+          changed_by_name: currentUser?.full_name || 'Citizen',
+          public_comment: `Citizen reopened case: ${body.reason}`,
+          created_at: new Date().toISOString(),
+        });
+        try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+        return comp as unknown as T;
+      }
+    }
+
+    // Admin Run Escalation
+    if (endpoint === '/admin/run-escalation') {
+      let count = 0;
+      localComplaintsStore.forEach(c => {
+        if (['submitted', 'assigned', 'in_progress'].includes(c.status) && c.priority === 'critical') {
+          c.status = 'escalated';
+          count++;
+        }
+      });
+      try { localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore)); } catch {}
+      return {
+        message: 'Escalation engine completed successfully.',
+        escalated_count: count,
+        processed_count: localComplaintsStore.length,
+        timestamp: new Date().toISOString(),
+      } as unknown as T;
+    }
+  }
+
+  // Admin Users List
+  if (endpoint === '/admin/users') {
+    let registeredUsers: any[] = [];
+    try {
+      registeredUsers = JSON.parse(localStorage.getItem('jansahayak_registered_users') || '[]');
+    } catch {}
+
+    const seedUsers = [
+      {
+        id: 'u-1',
+        email: 'admin@jansahayak.gov.in',
+        full_name: 'Rajesh Sharma (System Admin)',
+        preferred_language: 'en',
+        account_status: 'active',
+        roles: [{ role: 'system_admin', department_id: null }],
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'u-2',
+        email: 'officer.water@jansahayak.gov.in',
+        full_name: 'Amit Verma (Field Officer)',
+        preferred_language: 'hi',
+        account_status: 'active',
+        roles: [{ role: 'department_officer', department_id: 'd1' }],
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'u-3',
+        email: 'head.water@jansahayak.gov.in',
+        full_name: 'Dr. Sunita Deshmukh (Dept Head)',
+        preferred_language: 'mr',
+        account_status: 'active',
+        roles: [{ role: 'department_head', department_id: 'd1' }],
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'u-4',
+        email: 'citizen@jansahayak.gov.in',
+        full_name: 'Ramesh Kumar (Citizen)',
+        preferred_language: 'hi',
+        account_status: 'active',
+        roles: [{ role: 'citizen', department_id: null }],
+        created_at: new Date().toISOString(),
+      },
+    ];
+
+    const cleanRegistered = registeredUsers.map(({ password: _, ...rest }) => rest);
+    return [...seedUsers, ...cleanRegistered] as unknown as T;
+  }
+
+  // Admin Audit Logs
+  if (endpoint === '/admin/audit-logs') {
+    return [
+      {
+        id: 'audit-1',
+        action: 'COMPLAINT_SUBMITTED',
+        entity_type: 'complaint',
+        entity_id: localComplaintsStore[0]?.ticket_id || 'JSA-2026-W8491A',
+        actor_name: 'Citizen Portal',
+        ip_address: '127.0.0.1',
+        created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
+      },
+      {
+        id: 'audit-2',
+        action: 'AI_CLASSIFICATION_PERFORMED',
+        entity_type: 'ai_engine',
+        entity_id: 'sarvam-indic-v2',
+        actor_name: 'Sarvam AI Provider',
+        ip_address: '10.0.4.12',
+        created_at: new Date(Date.now() - 3500 * 1000).toISOString(),
+      },
+      {
+        id: 'audit-3',
+        action: 'STATUS_TRANSITION',
+        entity_type: 'complaint',
+        entity_id: localComplaintsStore[0]?.ticket_id || 'JSA-2026-W8491A',
+        actor_name: 'Amit Verma (Field Officer)',
+        ip_address: '192.168.1.45',
+        created_at: new Date(Date.now() - 1800 * 1000).toISOString(),
+      },
+    ] as unknown as T;
+  }
+
+  // Dynamic Department Analytics
+  if (endpoint.startsWith('/departments/me/analytics')) {
+    const total = localComplaintsStore.length;
+    const submitted = localComplaintsStore.filter(c => c.status === 'submitted').length;
+    const inProgress = localComplaintsStore.filter(c => ['assigned', 'in_progress', 'under_review', 'awaiting_information'].includes(c.status)).length;
+    const resolved = localComplaintsStore.filter(c => ['resolved', 'closed'].includes(c.status)).length;
+    const escalated = localComplaintsStore.filter(c => c.status === 'escalated').length;
+    const rate = total > 0 ? Math.round((resolved / total) * 1000) / 10 : 100;
+
+    return {
+      total_assigned: total,
+      new_received: submitted,
+      in_progress: inProgress,
+      resolved: resolved,
+      escalated: escalated,
+      overdue: escalated,
+      resolution_rate_percent: rate,
+      category_distribution: [
+        { category: 'Water Supply', count: localComplaintsStore.filter(c => c.category_name?.includes('Water')).length || 1 },
+        { category: 'Electricity', count: localComplaintsStore.filter(c => c.category_name?.includes('Electricity')).length || 1 },
+        { category: 'Roads & Infrastructure', count: localComplaintsStore.filter(c => c.category_name?.includes('Roads')).length || 1 },
+        { category: 'Sanitation', count: localComplaintsStore.filter(c => c.category_name?.includes('Sanitation')).length || 1 },
+      ],
+      priority_distribution: [
+        { priority: 'critical', count: localComplaintsStore.filter(c => c.priority === 'critical').length },
+        { priority: 'high', count: localComplaintsStore.filter(c => c.priority === 'high').length },
+        { priority: 'medium', count: localComplaintsStore.filter(c => c.priority === 'medium').length },
+        { priority: 'low', count: localComplaintsStore.filter(c => c.priority === 'low').length },
+      ],
+    } as unknown as T;
+  }
+// Admin Overview
   if (endpoint === '/admin/overview') {
     return {
       total_users: 1420,

@@ -11,24 +11,29 @@ import {
   Filter,
   Search,
   ChevronRight,
+  Building2,
 } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, MOCK_DEPARTMENTS } from '../../services/api';
 import { Complaint } from '../../types';
 
 export const DepartmentDashboard: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [selectedDept, setSelectedDept] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedDept]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      const endpoint = selectedDept === 'all'
+        ? '/departments/me/complaints'
+        : `/departments/me/complaints?department_id=${selectedDept}`;
       const [compList, stats] = await Promise.all([
-        api.get<Complaint[]>('/departments/me/complaints'),
+        api.get<Complaint[]>(endpoint),
         api.get<any>('/departments/me/analytics'),
       ]);
       setComplaints(compList);
@@ -56,10 +61,27 @@ export const DepartmentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div>
-        <span className="text-xs font-bold text-govblue-600 uppercase tracking-wider">Operational Workbench</span>
-        <h1 className="text-2xl font-extrabold text-navy-800 mt-0.5">Department Grievance Queue</h1>
-        <p className="text-xs text-mutedtext">Review incoming complaints, prioritize urgent alerts, and update field resolution.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold text-govblue-600 uppercase tracking-wider">Operational Workbench</span>
+          <h1 className="text-2xl font-extrabold text-navy-800 mt-0.5">Department Grievance Queue</h1>
+          <p className="text-xs text-mutedtext">Review incoming complaints, prioritize urgent alerts, and update field resolution.</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-govborder rounded-xl px-3 py-2 shadow-sm">
+          <Building2 className="w-4 h-4 text-govblue-600 flex-shrink-0" />
+          <select
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            className="text-xs font-semibold text-navy-800 bg-transparent focus:outline-none cursor-pointer"
+          >
+            <option value="all">🏢 All Departments (Full Statewide Queue)</option>
+            {MOCK_DEPARTMENTS.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name} ({d.code})
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -78,7 +100,7 @@ export const DepartmentDashboard: React.FC = () => {
 
         <div className="bg-surface p-4 rounded-2xl border border-govborder shadow-sm space-y-1">
           <span className="text-xs font-semibold text-mutedtext">In Investigation</span>
-          <div className="text-2xl font-black text-amber-600">{analytics?.in_progress || 1}</div>
+          <div className="text-2xl font-black text-amber-600">{analytics?.in_progress || 0}</div>
           <span className="text-[10px] text-slate-400">Field team active</span>
         </div>
 
@@ -110,6 +132,12 @@ export const DepartmentDashboard: React.FC = () => {
 
         {loading ? (
           <div className="text-center py-12 text-xs text-mutedtext">Loading queue...</div>
+        ) : complaints.length === 0 ? (
+          <div className="text-center py-16 text-mutedtext space-y-2">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+            <p className="text-sm font-bold text-navy-800">Grievance queue is clear!</p>
+            <p className="text-xs text-slate-400">No active complaints require action for this department selection.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -117,6 +145,7 @@ export const DepartmentDashboard: React.FC = () => {
                 <tr>
                   <th className="py-3 px-4">Ticket ID</th>
                   <th className="py-3 px-4">Complaint Title</th>
+                  <th className="py-3 px-4">Department</th>
                   <th className="py-3 px-4">Urgency</th>
                   <th className="py-3 px-4">Location</th>
                   <th className="py-3 px-4">Status</th>
@@ -128,6 +157,7 @@ export const DepartmentDashboard: React.FC = () => {
                   <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-bold text-govblue-600">{c.ticket_id}</td>
                     <td className="py-3.5 px-4 font-semibold text-navy-800 max-w-sm truncate">{c.title}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{c.department_name || 'Assigned under routing'}</td>
                     <td className="py-3.5 px-4">{getUrgencyBadge(c.priority)}</td>
                     <td className="py-3.5 px-4 text-slate-600">{c.district || 'Statewide'}, {c.state}</td>
                     <td className="py-3.5 px-4 capitalize font-semibold">{c.status.replace('_', ' ')}</td>
