@@ -1,4 +1,4 @@
-# 🏛️ JanSahayak AI (Team Neural-Storm)
+# 🏛️ JanSahayak AI
 ### *AI-Powered Multilingual Public Grievance Redressal Platform*
 > **"Your Language. Your Voice. Your Government."**
 
@@ -12,7 +12,7 @@
 
 ## 📌 Overview
 
-**JanSahayak AI** bridges the communication divide between citizens and public administration across India. Citizens can report civic grievances in their native language (Hindi, Marathi, Tamil, etc.) through speech or text. The built-in AI pipeline transcribes voice notes, translates content, assesses urgency, automatically routes the complaint to the correct authority across 11 government departments with strict SLA countdowns, and provides public progress tracking without leaking citizen PII.
+**JanSahayak AI** bridges the communication divide between citizens and public administration across India. Citizens can report civic grievances in their native language (Hindi, Marathi, Tamil, Telugu, etc.) through spoken audio or text. The built-in AI pipeline transcribes voice notes, translates content, assesses urgency, automatically routes the complaint to the correct authority across 11 government departments with strict SLA countdowns, and provides public progress tracking without leaking citizen PII.
 
 ---
 
@@ -78,8 +78,8 @@ Make sure you have the following installed on your machine:
 ### Step 1: Clone the Repository
 Open your terminal / PowerShell:
 ```bash
-git clone https://github.com/Anushka-Nirmal/Neural-Storm.git
-cd Neural-Storm
+git clone https://github.com/namdas-om/Jan-Sahayak-AI-Multilingual-Grievance-Platform.git
+cd Jan-Sahayak-AI-Multilingual-Grievance-Platform
 ```
 
 ---
