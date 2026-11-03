@@ -1,23 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  ShieldAlert,
   Globe,
-  Bell,
   User,
   LogOut,
   Menu,
   X,
-  FileText,
-  Building2,
-  Settings,
   ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const Navbar: React.FC = () => {
-  const { user, role, isAuthenticated, logout } = useAuth();
+  const { role, isAuthenticated, logout } = useAuth();
   const { currentLanguage, setLanguage, availableLanguages, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -43,12 +38,10 @@ export const Navbar: React.FC = () => {
       <div className="bg-navy-800 text-xs py-1.5 px-4 text-slate-300 flex justify-between items-center border-b border-navy-700">
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>JanSahayak AI • Official Grievance Redressal Gateway</span>
+          <span>{t('brandName')} • {t('gatewayTitle')}</span>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-slate-400">
-          <span>Accessible in 13 Indian Languages</span>
-          <span>•</span>
-          <span>24/7 Redressal Monitoring</span>
+          <span>{t('announcement')}</span>
         </div>
       </div>
 
@@ -60,7 +53,7 @@ export const Navbar: React.FC = () => {
           </div>
           <div>
             <div className="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-1.5">
-              <span>JanSahayak</span>
+              <span>{t('brandName')}</span>
               <span className="text-xs bg-saffron-500 text-navy-900 font-bold px-1.5 py-0.5 rounded tracking-normal">
                 AI
               </span>
@@ -113,17 +106,17 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1.5 bg-navy-800 hover:bg-navy-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-navy-700 transition-colors"
+              className="flex items-center gap-1.5 bg-navy-800 hover:bg-navy-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-navy-700 transition-colors cursor-pointer"
             >
               <Globe className="w-3.5 h-3.5 text-saffron-500" />
-              <span>{currentLangObj.native_name}</span>
+              <span className="font-semibold text-white">{currentLangObj.native_name}</span>
               <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
 
             {langDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white text-bodytext rounded-xl shadow-xl border border-govborder py-2 z-50 max-h-72 overflow-y-auto">
                 <div className="px-3 py-1 text-[11px] font-bold text-mutedtext uppercase tracking-wider border-b border-slate-100">
-                  Select Language
+                  {t('selectLanguage')}
                 </div>
                 {availableLanguages.map((lang) => (
                   <button
@@ -132,7 +125,7 @@ export const Navbar: React.FC = () => {
                       setLanguage(lang.code);
                       setLangDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer ${
                       lang.code === currentLanguage ? 'font-bold text-govblue-600 bg-govblue-50' : 'text-slate-700'
                     }`}
                   >
@@ -152,12 +145,12 @@ export const Navbar: React.FC = () => {
                 className="flex items-center gap-2 bg-govblue-600 hover:bg-govblue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm transition-colors"
               >
                 <User className="w-3.5 h-3.5" />
-                <span>Dashboard ({role === 'system_admin' ? 'Admin' : role?.replace('_', ' ')})</span>
+                <span>{t('dashboard')} ({role === 'system_admin' ? 'Admin' : role?.replace('_', ' ')})</span>
               </Link>
               <button
                 onClick={handleLogout}
-                className="p-2 text-slate-400 hover:text-red-400 hover:bg-navy-800 rounded-lg transition-colors"
-                title="Sign Out"
+                className="p-2 text-slate-400 hover:text-red-400 hover:bg-navy-800 rounded-lg transition-colors cursor-pointer"
+                title={t('logout')}
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -182,6 +175,14 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile menu hamburger */}
         <div className="md:hidden flex items-center gap-2">
+          {/* Mobile language button */}
+          <button
+            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+            className="flex items-center gap-1 bg-navy-800 text-slate-200 text-xs px-2 py-1 rounded border border-navy-700"
+          >
+            <Globe className="w-3 h-3 text-saffron-500" />
+            <span>{currentLangObj.native_name}</span>
+          </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-slate-300 hover:text-white"
@@ -231,7 +232,7 @@ export const Navbar: React.FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-center bg-govblue-600 text-white py-2 rounded-lg text-sm font-semibold"
                 >
-                  My Dashboard
+                  {t('dashboard')}
                 </Link>
                 <button
                   onClick={() => {
@@ -240,7 +241,7 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full text-center bg-navy-700 text-red-300 py-2 rounded-lg text-sm font-semibold"
                 >
-                  Sign Out
+                  {t('logout')}
                 </button>
               </>
             ) : (

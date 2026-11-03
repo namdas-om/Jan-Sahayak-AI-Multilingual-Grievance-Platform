@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, Clock, CheckCircle2, AlertCircle, Building2, Layers, ArrowLeft } from 'lucide-react';
 import { api } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface TimelineStep {
   status: string;
@@ -23,6 +24,7 @@ interface TrackData {
 }
 
 export const TrackPublicComplaintPage: React.FC = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const initialTicket = searchParams.get('ticket') || '';
   const [ticketInput, setTicketInput] = useState(initialTicket);

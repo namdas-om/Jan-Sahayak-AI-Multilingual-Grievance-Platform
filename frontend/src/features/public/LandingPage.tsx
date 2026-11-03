@@ -3,17 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   Mic,
-  ShieldCheck,
   Languages,
-  Zap,
-  ArrowRight,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  Building,
-  HelpCircle,
-  FileCheck,
   ChevronRight,
+  FileCheck,
+  HelpCircle,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -30,12 +23,12 @@ export const LandingPage: React.FC = () => {
   };
 
   const steps = [
-    { num: '01', title: 'Citizen Lodges Grievance', desc: 'Submit using natural voice or text in any of 13 Indian languages.' },
-    { num: '02', title: 'Language & Speech Processing', desc: 'Sarvam AI detects language, transcribes audio, and creates English translation.' },
-    { num: '03', title: 'AI Classification & Urgency', desc: 'Grievance is mapped to the right category and assigned an urgency SLA score.' },
-    { num: '04', title: 'Department Ticket Routing', desc: 'Unique nonsequential ticket issued and routed to the responsible department.' },
-    { num: '05', title: 'Field Action & Escalation', desc: 'Department officers inspect and resolve, with automated SLA escalation for delays.' },
-    { num: '06', title: 'Redressal & Citizen Feedback', desc: 'Citizen receives real-time SMS/in-app alert, reviews summary, and rates resolution.' },
+    { num: '01', title: t('step1Title'), desc: t('step1Desc') },
+    { num: '02', title: t('step2Title'), desc: t('step2Desc') },
+    { num: '03', title: t('step3Title'), desc: t('step3Desc') },
+    { num: '04', title: t('step4Title'), desc: t('step4Desc') },
+    { num: '05', title: t('step5Title'), desc: t('step5Desc') },
+    { num: '06', title: t('step6Title'), desc: t('step6Desc') },
   ];
 
   return (
@@ -45,33 +38,32 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-5xl mx-auto text-center space-y-6">
           <div className="inline-flex items-center gap-2 bg-navy-700/80 border border-navy-600 px-3.5 py-1.5 rounded-full text-xs font-semibold text-saffron-500 shadow-sm">
             <Languages className="w-3.5 h-3.5" />
-            <span>AI-Powered Multilingual Redressal Gateway</span>
+            <span>{t('heroBadge')}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-            Your Language. Your Voice.{' '}
+            {t('heroTitle1')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-govblue-500 via-sky-300 to-saffron-500">
-              Your Government.
+              {t('heroTitle2')}
             </span>
           </h1>
 
           <p className="max-w-3xl mx-auto text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
-            Submit public grievances in your preferred regional Indian language using voice or text.
-            Track every update with total transparency, automated department routing, and guaranteed SLA redressal.
+            {t('heroDesc')}
           </p>
 
           {/* Primary Call to Actions */}
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/citizen/complaints/new"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-navy-900 font-bold px-6 py-3.5 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-navy-900 font-bold px-6 py-3.5 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 text-sm cursor-pointer"
             >
               <Mic className="w-4 h-4" />
               <span>{t('registerGrievance')}</span>
             </Link>
             <Link
               to="/track"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-navy-700 hover:bg-navy-600 border border-slate-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-navy-700 hover:bg-navy-600 border border-slate-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors text-sm cursor-pointer"
             >
               <Search className="w-4 h-4 text-slate-300" />
               <span>{t('trackComplaint')}</span>
@@ -87,16 +79,16 @@ export const LandingPage: React.FC = () => {
               <Search className="w-5 h-5 text-slate-300 ml-3 flex-shrink-0" />
               <input
                 type="text"
-                placeholder="Enter Ticket ID (e.g. JSA-2026-W8491A)..."
+                placeholder={t('ticketPlaceholder')}
                 value={trackTicketInput}
                 onChange={(e) => setTrackTicketInput(e.target.value)}
                 className="w-full bg-transparent text-white placeholder-slate-400 text-xs sm:text-sm focus:outline-none px-2"
               />
               <button
                 type="submit"
-                className="bg-govblue-600 hover:bg-govblue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm flex-shrink-0 transition-colors"
+                className="bg-govblue-600 hover:bg-govblue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer"
               >
-                Track Now
+                {t('trackNow')}
               </button>
             </form>
           </div>
@@ -114,8 +106,8 @@ export const LandingPage: React.FC = () => {
               <FileCheck className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-navy-800">Lodge Grievance</h3>
-              <p className="text-xs text-mutedtext mt-0.5">Voice or Text in 13 languages</p>
+              <h3 className="font-bold text-sm text-navy-800">{t('registerGrievance')}</h3>
+              <p className="text-xs text-mutedtext mt-0.5">{t('voiceStudioTitle')}</p>
             </div>
           </Link>
 
@@ -127,8 +119,8 @@ export const LandingPage: React.FC = () => {
               <Search className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-navy-800">Track Status</h3>
-              <p className="text-xs text-mutedtext mt-0.5">Real-time redressal timeline</p>
+              <h3 className="font-bold text-sm text-navy-800">{t('trackComplaint')}</h3>
+              <p className="text-xs text-mutedtext mt-0.5">{t('timeline')}</p>
             </div>
           </Link>
 
@@ -140,8 +132,8 @@ export const LandingPage: React.FC = () => {
               <Languages className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-navy-800">13 Indic Languages</h3>
-              <p className="text-xs text-mutedtext mt-0.5">Hindi, Marathi, Tamil, etc.</p>
+              <h3 className="font-bold text-sm text-navy-800">{t('feature1Title')}</h3>
+              <p className="text-xs text-mutedtext mt-0.5">{t('languages')}</p>
             </div>
           </Link>
 
@@ -153,8 +145,8 @@ export const LandingPage: React.FC = () => {
               <HelpCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-navy-800">Help & FAQs</h3>
-              <p className="text-xs text-mutedtext mt-0.5">Citizen guide & SLA charter</p>
+              <h3 className="font-bold text-sm text-navy-800">{t('help')}</h3>
+              <p className="text-xs text-mutedtext mt-0.5">{t('howItWorks')}</p>
             </div>
           </Link>
         </div>
@@ -164,13 +156,13 @@ export const LandingPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <span className="text-xs font-bold text-govblue-600 uppercase tracking-wider">
-            Transparent Redressal Lifecycle
+            {t('gatewayTitle')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-800">
-            How JanSahayak AI Works
+            {t('howWorksHeading')}
           </h2>
           <p className="text-xs sm:text-sm text-mutedtext">
-            Every step is recorded on an immutable timeline, routing your grievance to the rightful authority.
+            {t('howWorksSubtitle')}
           </p>
         </div>
 
@@ -194,20 +186,20 @@ export const LandingPage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <span className="text-xs font-bold text-saffron-500 uppercase tracking-wider">
-                Digital Inclusion
+                {t('featuresHeading')}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                Supported Indian Languages
+                {t('feature1Title')}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                Full text translation, speech recognition, and automatic language detection powered by Sarvam AI.
+                {t('feature1Desc')}
               </p>
             </div>
             <Link
               to="/languages"
-              className="text-xs font-semibold bg-navy-800 hover:bg-navy-700 text-slate-200 px-4 py-2 rounded-lg border border-navy-600 flex items-center gap-1.5 transition-colors"
+              className="text-xs font-semibold bg-navy-800 hover:bg-navy-700 text-slate-200 px-4 py-2 rounded-lg border border-navy-600 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <span>View capabilities</span>
+              <span>{t('languages')}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -226,28 +218,43 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Real Statistics / Verified Metrics Display */}
+      {/* Key Feature Cards */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-surface p-6 rounded-2xl border border-govborder shadow-sm space-y-2">
+            <h3 className="font-bold text-sm text-navy-800">{t('feature1Title')}</h3>
+            <p className="text-xs text-mutedtext leading-relaxed">{t('feature1Desc')}</p>
+          </div>
+          <div className="bg-surface p-6 rounded-2xl border border-govborder shadow-sm space-y-2">
+            <h3 className="font-bold text-sm text-navy-800">{t('feature2Title')}</h3>
+            <p className="text-xs text-mutedtext leading-relaxed">{t('feature2Desc')}</p>
+          </div>
+          <div className="bg-surface p-6 rounded-2xl border border-govborder shadow-sm space-y-2">
+            <h3 className="font-bold text-sm text-navy-800">{t('feature3Title')}</h3>
+            <p className="text-xs text-mutedtext leading-relaxed">{t('feature3Desc')}</p>
+          </div>
+          <div className="bg-surface p-6 rounded-2xl border border-govborder shadow-sm space-y-2">
+            <h3 className="font-bold text-sm text-navy-800">{t('feature4Title')}</h3>
+            <p className="text-xs text-mutedtext leading-relaxed">{t('feature4Desc')}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom CTA Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-surface rounded-3xl p-8 border border-govborder shadow-sm grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-govblue-600">13</div>
-            <div className="text-xs font-bold text-navy-800">Supported Languages</div>
-            <p className="text-[11px] text-mutedtext">Voice & text processing</p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-govteal-500">100%</div>
-            <div className="text-xs font-bold text-navy-800">Human Redressal</div>
-            <p className="text-[11px] text-mutedtext">Officer verified actions</p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-saffron-500">&lt; 48h</div>
-            <div className="text-xs font-bold text-navy-800">Average SLA Target</div>
-            <p className="text-[11px] text-mutedtext">Automated escalation</p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-navy-800">24/7</div>
-            <div className="text-xs font-bold text-navy-800">Real-Time Tracking</div>
-            <p className="text-[11px] text-mutedtext">Public status lookup</p>
+        <div className="bg-gradient-to-r from-govblue-600 to-navy-900 rounded-3xl p-8 sm:p-12 text-white text-center space-y-6 shadow-xl">
+          <h2 className="text-2xl sm:text-4xl font-extrabold">{t('ctaHeading')}</h2>
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-200">
+            {t('ctaDesc')}
+          </p>
+          <div>
+            <Link
+              to="/citizen/complaints/new"
+              className="inline-flex items-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-navy-900 font-bold px-8 py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 text-sm cursor-pointer"
+            >
+              <Mic className="w-5 h-5" />
+              <span>{t('registerGrievance')}</span>
+            </Link>
           </div>
         </div>
       </section>

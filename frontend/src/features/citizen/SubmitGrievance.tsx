@@ -21,13 +21,21 @@ import {
 } from 'lucide-react';
 import { api, MOCK_LANGUAGES, MOCK_DEPARTMENTS, MOCK_CATEGORIES } from '../../services/api';
 import { LanguageCapability, AIAnalysisResult, Department, ComplaintCategory, Complaint } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const SubmitGrievance: React.FC = () => {
   const navigate = useNavigate();
+  const { currentLanguage, t } = useLanguage();
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   // Step 1: Language
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('hi');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(currentLanguage || 'hi');
+
+  useEffect(() => {
+    if (currentLanguage) {
+      setSelectedLanguage(currentLanguage);
+    }
+  }, [currentLanguage]);
 
   // Step 2: Grievance Content
   const [title, setTitle] = useState('');
