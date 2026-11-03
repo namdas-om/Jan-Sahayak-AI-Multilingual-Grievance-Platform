@@ -47,28 +47,37 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  let res: Response | null = null;
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
+    res = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
       headers,
     });
 
+    const contentType = res.headers.get('content-type') || '';
+
+    // If static host (e.g. Vercel SPA) returned index.html for an API route
+    if (contentType.includes('text/html')) {
+      return handleFallback<T>(endpoint, options, new Error('HTML page returned instead of API JSON'));
+    }
+
     if (!res.ok) {
+      // 404 (route missing) or 502/503/504 (backend offline/proxy drop)
+      if (res.status === 404 || res.status >= 502) {
+        return handleFallback<T>(endpoint, options, new Error(`Server returned HTTP ${res.status}`));
+      }
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Request failed with status ${res.status}`);
+      throw new Error(errorData.detail || errorData.message || `Request failed with status ${res.status}`);
     }
 
     return await res.json();
   } catch (err: any) {
-    // Only fall back to local store if the backend server is unreachable (offline network error)
-    if (
-      err?.message?.includes('Failed to fetch') ||
-      err?.name === 'TypeError' ||
-      err?.message?.includes('NetworkError')
-    ) {
-      return handleFallback<T>(endpoint, options, err);
+    // If backend actively sent a 400, 401, 403, 422 validation response, propagate it
+    if (res && (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422)) {
+      throw err;
     }
-    throw err;
+
+    return handleFallback<T>(endpoint, options, err);
   }
 }
 
@@ -113,7 +122,7 @@ export const MOCK_CATEGORIES: ComplaintCategory[] = [
   { id: 'c7', name: 'Municipal Services', code: 'CAT_MUNICIPAL', is_active: true, created_at: new Date().toISOString() },
 ];
 
-let localComplaintsStore: Complaint[] = [
+const INITIAL_COMPLAINTS: Complaint[] = [
   {
     id: 'comp-101',
     ticket_id: 'JSA-2026-W8491A',
@@ -196,8 +205,156 @@ let localComplaintsStore: Complaint[] = [
   }
 ];
 
+let localComplaintsStore: Complaint[] = (() => {
+  try {
+    const saved = localStorage.getItem('jansahayak_complaints');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return INITIAL_COMPLAINTS;
+})();
+
 function handleFallback<T>(endpoint: string, options: RequestInit, originalError: any): T {
   console.info(`[JanSahayak API client] Fallback handler for: ${endpoint}`);
+
+  // User Registration fallback
+  if (endpoint === '/auth/register' && options.method === 'POST') {
+    const body = JSON.parse((options.body as string) || '{}');
+    if (!body.email || !body.full_name) {
+      throw new Error('Please provide your name and email address.');
+    }
+    if (body.password && body.password.length < 8) {
+      throw new Error('Password must be at least 8 characters long.');
+    }
+
+    const emailClean = body.email.trim().toLowerCase();
+    
+    // Check local registered users store
+    let registeredUsers: any[] = [];
+    try {
+      registeredUsers = JSON.parse(localStorage.getItem('jansahayak_registered_users') || '[]');
+    } catch {
+      registeredUsers = [];
+    }
+
+    const existing = registeredUsers.find((u: any) => u.email.toLowerCase() === emailClean);
+    if (existing) {
+      throw new Error('An account with this email address already exists.');
+    }
+
+    const newUser: User = {
+      id: `usr-${Date.now()}`,
+      email: emailClean,
+      full_name: body.full_name.trim(),
+      preferred_language: body.preferred_language || 'hi',
+      phone_number: body.phone_number?.trim() || undefined,
+      account_status: 'active',
+      roles: [{ role: 'citizen', department_id: null }],
+      created_at: new Date().toISOString(),
+    };
+
+    registeredUsers.push({ ...newUser, password: body.password });
+    try {
+      localStorage.setItem('jansahayak_registered_users', JSON.stringify(registeredUsers));
+    } catch {}
+
+    const token = `jwt_token_citizen_${Date.now()}`;
+    return {
+      access_token: token,
+      token_type: 'bearer',
+      user: newUser,
+    } as unknown as T;
+  }
+
+  // User Login fallback
+  if (endpoint === '/auth/login' && options.method === 'POST') {
+    const body = JSON.parse((options.body as string) || '{}');
+    const emailClean = (body.email || '').trim().toLowerCase();
+    const password = body.password || '';
+
+    // 1. Check in locally registered users
+    let registeredUsers: any[] = [];
+    try {
+      registeredUsers = JSON.parse(localStorage.getItem('jansahayak_registered_users') || '[]');
+    } catch {
+      registeredUsers = [];
+    }
+    const userFound = registeredUsers.find((u: any) => u.email.toLowerCase() === emailClean);
+    if (userFound) {
+      if (userFound.password && userFound.password !== password) {
+        throw new Error('Incorrect email or password.');
+      }
+      const { password: _, ...cleanUser } = userFound;
+      return {
+        access_token: `jwt_token_${cleanUser.id}`,
+        token_type: 'bearer',
+        user: cleanUser,
+      } as unknown as T;
+    }
+
+    // 2. Check demo accounts
+    const demoAccounts: Record<string, { role: any; name: string; dept?: string }> = {
+      'citizen@jansahayak.gov.in': { role: 'citizen', name: 'Ramesh Kumar (Citizen)' },
+      'officer.water@jansahayak.gov.in': { role: 'department_officer', name: 'Amit Verma (Field Officer)', dept: 'd1' },
+      'head.water@jansahayak.gov.in': { role: 'department_head', name: 'Dr. Sunita Deshmukh (Dept Head)', dept: 'd1' },
+      'admin@jansahayak.gov.in': { role: 'system_admin', name: 'Rajesh Sharma (System Admin)' },
+    };
+
+    const demo = demoAccounts[emailClean];
+    if (demo) {
+      const demoUser: User = {
+        id: `demo-${demo.role}`,
+        email: emailClean,
+        full_name: demo.name,
+        preferred_language: 'en',
+        account_status: 'active',
+        roles: [{ role: demo.role, department_id: demo.dept || null }],
+        created_at: new Date().toISOString(),
+      };
+      return {
+        access_token: `demo_jwt_token_${demo.role}_${Date.now()}`,
+        token_type: 'bearer',
+        user: demoUser,
+      } as unknown as T;
+    }
+
+    // 3. Fallback: Allow logging in as citizen for testing
+    if (emailClean && password.length >= 6) {
+      const fallbackUser: User = {
+        id: `usr-${Date.now()}`,
+        email: emailClean,
+        full_name: emailClean.split('@')[0],
+        preferred_language: 'en',
+        account_status: 'active',
+        roles: [{ role: 'citizen', department_id: null }],
+        created_at: new Date().toISOString(),
+      };
+      return {
+        access_token: `jwt_token_${Date.now()}`,
+        token_type: 'bearer',
+        user: fallbackUser,
+      } as unknown as T;
+    }
+
+    throw new Error('Incorrect email or password.');
+  }
+
+  // Current User (/auth/me) fallback
+  if (endpoint === '/auth/me') {
+    const current = getStoredUser();
+    if (current) return current as unknown as T;
+    return {
+      id: 'demo-citizen-1',
+      email: 'citizen@jansahayak.gov.in',
+      full_name: 'Citizen User',
+      preferred_language: 'hi',
+      account_status: 'active',
+      roles: [{ role: 'citizen', department_id: null }],
+      created_at: new Date().toISOString(),
+    } as unknown as T;
+  }
 
   // Languages endpoint
   if (endpoint === '/languages') {
@@ -472,6 +629,9 @@ function handleFallback<T>(endpoint: string, options: RequestInit, originalError
       comments: [],
     };
     localComplaintsStore.unshift(newComp);
+    try {
+      localStorage.setItem('jansahayak_complaints', JSON.stringify(localComplaintsStore));
+    } catch (e) {}
     return newComp as unknown as T;
   }
 

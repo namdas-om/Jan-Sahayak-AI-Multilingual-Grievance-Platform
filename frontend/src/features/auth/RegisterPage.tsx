@@ -6,7 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
-  const { availableLanguages } = useLanguage();
+  const { availableLanguages, setLanguage: setGlobalLanguage } = useLanguage();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
@@ -23,12 +23,15 @@ export const RegisterPage: React.FC = () => {
     setError(null);
     try {
       await register({
-        full_name: fullName,
-        email,
+        full_name: fullName.trim(),
+        email: email.trim().toLowerCase(),
         password,
-        phone_number: phone,
+        phone_number: phone.trim() || undefined,
         preferred_language: language,
       });
+      if (language) {
+        setGlobalLanguage(language);
+      }
       navigate('/citizen/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please check your details.');
