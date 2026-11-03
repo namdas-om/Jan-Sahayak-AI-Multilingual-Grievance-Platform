@@ -69,9 +69,9 @@ graph TD
 
 ### Prerequisites
 Make sure you have the following installed on your machine:
-* **Node.js** (v18.0 or higher) & **npm** $\rightarrow$ [Download Node.js](https://nodejs.org/)
-* **Python** (v3.10 or higher) $\rightarrow$ [Download Python](https://www.python.org/)
-* **Git** $\rightarrow$ [Download Git](https://git-scm.com/)
+* **Node.js** (v18.0 or higher) & **npm** → [Download Node.js](https://nodejs.org/)
+* **Python** (v3.10 or higher) → [Download Python](https://www.python.org/)
+* **Git** → [Download Git](https://git-scm.com/)
 
 ---
 
