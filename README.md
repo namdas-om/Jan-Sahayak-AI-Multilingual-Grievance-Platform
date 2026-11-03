@@ -90,7 +90,7 @@ Copy the sample environment files for both root and backend:
 **On Windows (PowerShell):**
 ```powershell
 Copy-Item .env.example .env
-Copy-Item backend/.env.example backend/.env
+Copy-Item backend\.env.example backend\.env
 ```
 
 **On macOS / Linux:**
@@ -109,7 +109,7 @@ Open your first terminal window in the project root:
 **On Windows (PowerShell):**
 ```powershell
 # 1. Install backend dependencies (if not already installed)
-pip install -r backend/requirements.txt
+pip install -r backend\requirements.txt
 
 # 2. Set Python path and start the FastAPI server
 $env:PYTHONPATH="backend"
