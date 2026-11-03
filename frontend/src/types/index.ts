@@ -90,6 +90,8 @@ export interface ComplaintFeedback {
 export interface Complaint {
   id: string;
   ticket_id: string;
+  citizen_id?: string | null;
+  citizen_email?: string | null;
   title: string;
   original_language: string;
   original_description?: string;

@@ -126,6 +126,8 @@ const INITIAL_COMPLAINTS: Complaint[] = [
   {
     id: 'comp-101',
     ticket_id: 'JSA-2026-W8491A',
+    citizen_id: 'demo-citizen-1',
+    citizen_email: 'citizen@jansahayak.gov.in',
     title: 'Severe pipeline leakage and low drinking water pressure',
     original_description: 'हमारे वार्ड नंबर 12 में पिछले 4 दिनों से मुख्य पाइपलाइन फटी हुई है और पीने के पानी का दबाव बेहद कम है। गंदा पानी भी आ रहा है। कृपया तुरंत मरम्मत करें।',
     original_language: 'hi',
@@ -156,6 +158,8 @@ const INITIAL_COMPLAINTS: Complaint[] = [
   {
     id: 'comp-102',
     ticket_id: 'JSA-2026-P9215B',
+    citizen_id: 'demo-citizen-1',
+    citizen_email: 'citizen@jansahayak.gov.in',
     title: 'Frequent voltage drops and power transformer spark',
     original_description: 'There is a transformer near Sector 4 community park giving loud sparks and continuous tripping. Risk of fire.',
     original_language: 'en',
@@ -183,6 +187,8 @@ const INITIAL_COMPLAINTS: Complaint[] = [
   {
     id: 'comp-103',
     ticket_id: 'JSA-2026-R7724C',
+    citizen_id: 'demo-citizen-1',
+    citizen_email: 'citizen@jansahayak.gov.in',
     title: 'Deep road potholes causing traffic and minor accidents',
     original_description: 'On Main Market road, multiple potholes have appeared after rain. Two wheelers skid regularly.',
     original_language: 'en',
@@ -397,15 +403,41 @@ function handleFallback<T>(endpoint: string, options: RequestInit, originalError
 
   // Complaints list
   if (endpoint.startsWith('/complaints') && (!options.method || options.method === 'GET')) {
-    if (endpoint.includes('/me/complaints')) {
-      return localComplaintsStore as unknown as T;
-    }
     const singleMatch = endpoint.match(/\/complaints\/([^\/?]+)/);
     if (singleMatch && singleMatch[1] && singleMatch[1] !== 'track') {
       const c = localComplaintsStore.find(x => x.id === singleMatch[1] || x.ticket_id === singleMatch[1]);
       if (c) return c as unknown as T;
       return localComplaintsStore[0] as unknown as T;
     }
+
+    const currentUser = getStoredUser();
+    const userRole = currentUser?.roles?.[0]?.role;
+
+    // For Citizens: ONLY display grievances submitted by this citizen (new citizen accounts start with 0 complaints)
+    if (userRole === 'citizen') {
+      // Preloaded demo citizen sees demo complaints
+      if (currentUser?.email?.toLowerCase() === 'citizen@jansahayak.gov.in') {
+        return localComplaintsStore.filter(c =>
+          !c.citizen_email || c.citizen_email.toLowerCase() === 'citizen@jansahayak.gov.in' || c.citizen_id === 'demo-citizen-1'
+        ) as unknown as T;
+      }
+      // Newly registered citizen: fresh empty slate until they submit their own complaints
+      return localComplaintsStore.filter(c =>
+        (currentUser?.id && c.citizen_id === currentUser.id) ||
+        (currentUser?.email && c.citizen_email && c.citizen_email.toLowerCase() === currentUser.email.toLowerCase())
+      ) as unknown as T;
+    }
+
+    // For Department Staff: filter by department
+    if (userRole === 'department_officer' || userRole === 'department_head') {
+      const deptId = currentUser?.roles?.[0]?.department_id;
+      if (deptId) {
+        return localComplaintsStore.filter(c => c.assigned_department_id === deptId) as unknown as T;
+      }
+      return localComplaintsStore as unknown as T;
+    }
+
+    // System Admin sees all complaints
     return localComplaintsStore as unknown as T;
   }
 
@@ -602,10 +634,13 @@ function handleFallback<T>(endpoint: string, options: RequestInit, originalError
     // Lookup matching category and department from available lists
     const matchedCategory = MOCK_CATEGORIES.find(c => c.id === body.category_id) || MOCK_CATEGORIES[0];
     const matchedDepartment = MOCK_DEPARTMENTS.find(d => d.id === body.assigned_department_id) || MOCK_DEPARTMENTS[0];
+    const currentUser = getStoredUser();
 
     const newComp: Complaint = {
       id: `comp-${Date.now()}`,
       ticket_id: randomTicket,
+      citizen_id: currentUser?.id || `usr-${Date.now()}`,
+      citizen_email: currentUser?.email?.toLowerCase() || undefined,
       title: body.title,
       original_description: body.description,
       original_language: body.language || 'en',
